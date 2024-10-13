@@ -82,19 +82,20 @@
 	;rutaSegunda db 'C',':','\','D','i','b','u','j','o','s','\','h','o','l','a','.','t','x','t','$',00h ; Carpeta donde se encuentran los archivos de los dibujos
 	handle dw 0 ; Contenido del archivo (Dibujo a guardar)
 	char_buffer db 1 dup('0')
-	TempCol DW 0;
-	TempFil DW 0;
+	TempCol DW 0; Variable temporal para la columna del ciclo de guardar 
+	TempFil DW 0; Variable temporal para la fila del ciclo de guardar 
+	tempColor DB 04H; Variable para guardar el color del pixel de pantalla
 
 .code
 	MOV AX,@DATA
 	MOV DS,AX
 
-	MOV AH,00; Interrupcion 10,0
+	MOV AH,00H; Interrupcion 10,0
 	MOV AL,12H; 640x480 16 bits modo video
 	INT 10H
-	
+
 	CALL CLEAN; Pinta la pantalla de blanco
-		
+
 	MOV CX, 400; Contador dibuja un pixel de la linea horizontal 400 veces
 	LINEAHORIZONTAL:
 		PUSH CX; Pone cx en la pila
@@ -213,16 +214,12 @@
 			PINTA_PIXEL CX,DX,0FH; Llama al  macro de pintar un pixel de color blanco
 			
 			INC CX; Incrementa la Columna
-			MOV AX,CX; Pone el valor de la columna aumentada en AX
-			SUB AX,ColRecuadro; Resta el valor de la columna con el valor de la columna aumentada
-			cmp AX,398; Compara si se excedio el tamano de la columna que se queria
+			cmp CX,449; Compara si se excedio la coodenada de la columna que se queria
 			jng COLUMNA_RECUADRO; Salta si AX es menor a 398 es decir si no se excedio el Tamano
 			
 			MOV CX,ColRecuadro; Reinicia el valor de la columna
 			INC DX; Incrementa la Fila
-			MOV AX,DX; Pone el valor de la fila aumentada en AX
-			SUB AX,FilRecuadro; Resta el valor de la fila con el de la fila aumentada
-			cmp AX,298;Compara si se excedio el tamano de la fila que se queria
+			cmp DX,349;Compara si se excedio la coodenada de la fila que se queria
 			jng COLUMNA_RECUADRO; Salta si AX es menor a 298 es decir si no se excedio el tamano
 		ret
 	LIMPIAR_DIBUJO endp
@@ -679,29 +676,38 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 		MOV FilRecuadro,51; Inicia FilRecuadro en 51 para no pintar las lineas de borde
 		MOV CX,ColRecuadro; Coloca en CX la columna de inicio a pintar
 		MOV TempCol,CX
-		MOV DX,TempFil
-		MOV TempFil,DX; Coloca en DX la fila de inicio a pintar
-
+		MOV DX,FilRecuadro; Coloca en DX la fila de inicio a pintar
+		MOV TempFil,DX
 		COLUMNA_COLOR:
+			xor al, al
 			MOV CX,TempCol
 			MOV DX,TempFil
 			MOV AH,0DH
-			MOV BH,0H
-			INT 10; Revisa el color de un pixel y lo guarda en AL
+			MOV BH,00H
+			INT 10H; Revisa el color de un pixel y lo guarda en AL
+			MOV tempColor,AL
 			jmp CompararColor
 			continuar:
 			INC TempCol; Incrementa la Columna
-			MOV AX,TempCol; Pone el valor de la columna aumentada en AX
-			SUB AX,ColRecuadro; Resta el valor de la columna con el valor de la columna aumentada
-			cmp AX,398; Compara si se excedio el tamano de la columna que se queria
-			jng COLUMNA_COLOR; Salta si AX es menor a 398 es decir si no se excedio el Tamano			
-			MOV CX,ColRecuadro; Reinicia el valor de la columna
-			MOV TempCol,CX
-			INC TempFil; Incrementa la Fila
-			MOV AX,TempFil; Pone el valor de la fila aumentada en AX
-			SUB AX,FilRecuadro; Resta el valor de la fila con el de la fila aumentada
-			cmp AX,298;Compara si se excedio el tamano de la fila que se queria
-			jng COLUMNA_COLOR; Salta si AX es menor a 298 es decir si no se excedio el tamano
+            MOV AX,TempCol; Pone el valor de la columna aumentada en AX
+            cmp AX,449; Compara si se excedio la coodenada de la columna que se queria
+            jng COLUMNA_COLOR; Salta si AX es menor o igual a 449
+            MOV CX,ColRecuadro; Reinicia el valor de la columna
+            MOV TempCol,CX
+            INC TempFil; Incrementa la Fila
+			
+			mov AL, '@'
+			mov char_buffer, AL
+			mov cx,1; Cantidad a guardar
+			mov dx,offset char_buffer; Cargamos Datos
+			mov ah,40h
+			int 21h
+			cmp cx,ax
+			jne SaltoIrATerminarContenido
+			
+            MOV AX,TempFil; Pone el valor de la fila aumentada en AX
+            cmp AX,349;Compara si se excedio la coodenada de la fila que se queria		
+            jng COLUMNA_COLOR; Salta si AX es menor o igual a 349
 			jmp Fin_archivo
 ;======================================================Salto Intermedio============================================================================
 	SaltoIrATerminarContenido:
@@ -710,63 +716,64 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 ;======================================================Salto Intermedio============================================================================
 			CompararColor:
 			; Comparar el color y escribir el caracter correspondiente
-			cmp al, 02h
-			je escribir_1
-			cmp al, 04h
-			je escribir_4
-			cmp al, 05h
-			je escribir_5
-			cmp al, 06h
-			je escribir_6
-			cmp al, 09h
-			je escribir_9
-			cmp al, 0Ah
+			MOV AL,tempColor
+			cmp AL, 02h
 			je escribir_2
-			cmp al, 0Bh
-			je escribir_3
-			cmp al, 0Ch
+			cmp AL, 04h
+			je escribir_4
+			cmp AL, 05h
+			je escribir_5
+			cmp AL, 06h
+			je escribir_6
+			cmp AL, 09h
+			je escribir_9
+			cmp AL, 0Ah
+			je escribir_A
+			cmp AL, 0Bh
+			je escribir_B
+			cmp AL, 0Ch
 			je escribir_C
-			cmp al, 0Eh
+			cmp AL, 0Eh
 			je escribir_E
-			cmp al, 0Fh
-			je escribir_8
+			cmp AL, 0Fh
+			je escribir_F
+			;jmp escribir_8
 			jmp continuar; Si no coincide, continuar
 
-		escribir_1:
-			mov al, '1'
+		escribir_2:
+			mov AL, '2'
 			jmp escribir_character
 		escribir_4:
-			mov al, '4'
+			mov AL, '4'
 			jmp escribir_character
 		escribir_5:
-			mov al, '5'
+			mov AL, '5'
 			jmp escribir_character
 		escribir_E:
-			mov al, 'E'
+			mov AL, 'E'
 			jmp escribir_character
 		escribir_6:
-			mov al, '6'
+			mov AL, '6'
 			jmp escribir_character
 		escribir_9:
-			mov al, '9'
+			mov AL, '9'
 			jmp escribir_character
-		escribir_2:
-			mov al, '2'
+		escribir_A:
+			mov AL, 'A'
 			jmp escribir_character
-		escribir_3:
-			mov al, '3'
+		escribir_B:
+			mov AL, 'B'
 			jmp escribir_character
 		escribir_C:
-			mov al, 'C'
+			mov AL, 'C'
 			jmp escribir_character
-		escribir_8:
-			mov al, '8'
-			jmp escribir_character
-
+		escribir_F:
+			mov AL, 'F'
+			jmp escribir_character	
 		escribir_character:
-			mov char_buffer, al
+			mov char_buffer, AL
 			;;Escribir en el archivo
-			mov cx,3; Cantidad a guardar
+			mov cx,1; Cantidad a guardar
 			mov dx,offset char_buffer; Cargamos Datos
 			mov ah,40h
 			int 21h
@@ -776,8 +783,8 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 		
 		Fin_archivo:
 			; Al final de todos los caracteres, escribir '%'
-			mov al, '%'
-			mov char_buffer, al
+			mov AL, '%'
+			mov char_buffer, AL
 			mov cx,1; Cantidad a guardar
 			mov dx,offset char_buffer; Cargamos Datos
 			mov ah,40h
