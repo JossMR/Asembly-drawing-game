@@ -426,6 +426,7 @@
 		cmp FilCursor,40
 		jge NoEscribir		
 		;CALL GUARDAR_NOMBRE
+			CALL LIMPIAR_NOMBRE
 			CALL MOVER_POSICION_CURSOR
 			mov si,11; Iniciamos el contador donde queremos escribir la ruta
 			LeerpantallaNombre:
@@ -606,16 +607,12 @@
 			PINTA_PIXEL CX,DX,0FH; Llama al  macro de pintar un pixel de color blanco
 			
 			INC CX; Incrementa la Columna
-			MOV AX,CX; Pone el valor de la columna aumentada en AX
-			SUB AX,ColNombre; Resta el valor de la columna con el valor de la columna aumentada
-			cmp AX,128; Compara si se excedio el tamano de la columna que se queria
+			cmp CX,179; Compara si se excedio el tamano de la columna que se queria
 			jng COLUMNA_NOMBRE; Salta si AX es menor a 398 es decir si no se excedio el Tamano
 			
 			MOV CX,ColNombre; Reinicia el valor de la columna
 			INC DX; Incrementa la Fila
-			MOV AX,DX; Pone el valor de la fila aumentada en AX
-			SUB AX,FilNombre; Resta el valor de la fila con el de la fila aumentada
-			cmp AX,28;Compara si se excedio el tamano de la fila que se queria
+			cmp DX,39;Compara si se excedio el tamano de la fila que se queria
 			jng COLUMNA_NOMBRE; Salta si AX es menor a 298 es decir si no se excedio el tamano
 		ret
 	LIMPIAR_NOMBRE endp
