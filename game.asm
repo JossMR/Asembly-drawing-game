@@ -301,6 +301,7 @@
 		CALL DETECTAR_CLICK_LIMPIAR; Detectar si se hizo click en limpiar
 		CALL DETECTAR_CLICK_NOMBRE; Detectar si se agrego nombre para el archivo y guardarlo
 		CALL DETECTAR_CLICK_GUARDAR; Detectar si se hizo click en GuardarBosquejo
+		CALL DETECTAR_CLICK_CARGAR; Detectar si se hizo click en CargarBosquejo
 		CALL INICIO_PINTAR
 		
 		NoClick:
@@ -457,7 +458,6 @@
 		cmp FilCursor,405
 		jge NoGuardar
 		CALL GUARDAR_ARCHIVO
-		;CALL ESCRIBIR_PRUEBA
 		CALL ESCRIBIR_ARCHIVO
 	
 		NoGuardar:	
@@ -797,4 +797,129 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 		TerminarContenido:
 		ret       
 	ESCRIBIR_ARCHIVO endp
+
+	DETECTAR_CLICK_CARGAR proc
+		cmp ColCursor,50
+		jle NoCargar; si ColCursor es menor o igual salta 
+		cmp ColCursor,180
+		jge NoCargar; si ColCursor es mayor o igual salta
+		cmp FilCursor,425
+		jle NoCargar
+		cmp FilCursor,455
+		jge NoCargar
+		CALL CARGAR_ARCHIVO	
+		NoCargar:	
+		ret
+	DETECTAR_CLICK_CARGAR endp
+	
+	CARGAR_ARCHIVO proc
+		; Abrir archivo
+			mov ah,3dh
+			mov al,0h
+			mov dx,offset ruta ;ruta
+			int 21h
+			mov handle,ax
+		
+		; Variables
+		MOV ColRecuadro,51; Inicia ColRecuadro en 51 para no pintar las lineas de borde
+		MOV FilRecuadro,51; Inicia FilRecuadro en 51 para no pintar las lineas de borde
+		MOV CX,ColRecuadro; Coloca en CX la columna de inicio a pintar
+		MOV TempCol,CX
+		MOV DX,FilRecuadro; Coloca en DX la fila de inicio a pintar
+		MOV TempFil,DX
+		
+		COLUMNA_CARGAR:
+		; Leer el archivo 		
+			mov ah,3fh
+			mov bx,handle
+			mov dx,offset char_buffer
+			mov cx,1
+			int 21h	
+			jmp CompararArchivo
+			
+			SeguirCargando:
+			cmp char_buffer,'@'
+			je Aumentar_Fila
+			cmp char_buffer, '%'
+			je Fin_cargarSalto						
+			INC TempCol; Incrementa la Columna
+            jmp COLUMNA_CARGAR; Salta si AX es menor o igual a 449
+			Aumentar_Fila:
+            MOV CX,ColRecuadro; Reinicia el valor de la columna
+            MOV TempCol,CX
+            INC TempFil; Incrementa la Fila	
+            jmp COLUMNA_CARGAR; Salta si AX es menor o igual a 349
+		
+		CompararArchivo:
+			xor AL,AL
+			cmp char_buffer, '2'
+			je pintar_02H
+			cmp char_buffer, '4'
+			je pintar_04H
+			cmp char_buffer, '5'
+			je pintar_05H
+			cmp char_buffer, '6'
+			je pintar_06H
+			cmp char_buffer, '9'
+			je pintar_09H
+			cmp char_buffer, 'A'
+			je pintar_0AH
+			cmp char_buffer, 'B'
+			je pintar_0BH
+			cmp char_buffer, 'C'
+			je pintar_0CH
+			cmp char_buffer, 'E'
+			je pintar_0EH
+			cmp char_buffer, 'F'
+			je pintar_0FH
+			jmp SeguirCargando
+;======================================================Salto Intermedio============================================================================
+	Fin_cargarSalto:
+	jmp Fin_cargar
+;======================================================Salto Intermedio============================================================================	
+			pintar_02H:
+			mov AL, 02H
+			jmp pintarPixelCargado
+			pintar_04H:
+				mov AL, 04H
+				jmp pintarPixelCargado
+			pintar_05H:
+				mov AL, 05H
+				jmp pintarPixelCargado
+			pintar_0EH:
+				mov AL, 0EH
+				jmp pintarPixelCargado
+			pintar_06H:
+				mov AL, 06H
+				jmp pintarPixelCargado
+			pintar_09H:
+				mov AL, 09H
+				jmp pintarPixelCargado
+			pintar_0AH:
+				mov AL, 0AH
+				jmp pintarPixelCargado
+			pintar_0BH:
+				mov AL, 0BH
+				jmp pintarPixelCargado
+			pintar_0CH:
+				mov AL, 0CH
+				jmp pintarPixelCargado
+			pintar_0FH:
+				mov AL, 0FH
+				jmp pintarPixelCargado
+			
+		pintarPixelCargado:
+			MOV AH, 0CH; Interrupcion 10,C 
+			MOV BH, 00; Numero de pagina
+			MOV CX, TempCol; Columna
+			MOV DX, TempFil; Fila
+			INT 10H
+			jmp SeguirCargando
+		
+		Fin_cargar:
+		; Cerrar el archivo
+			mov ah,3eh
+			int 21h
+		ret
+	CARGAR_ARCHIVO endp
 end
