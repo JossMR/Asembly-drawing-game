@@ -55,6 +55,9 @@
 	ColColor DW 550; Posicion de la columna donde iniciar a pintar los cuadros de los colores
 	FilColor DW 50; Posicion de la fila donde iniciar a pintar los cuadros de los colores
 	
+	;Variables para posicion de cursor al insertar imagen
+	ImagenInsertada DW 0;
+	
 	; Variables para posicion de las opciones en pantalla
 	ColLimpiar DW 320; Posicion de la columna donde inciar a pintar el cuadro de limpiar
 	FilLimpiar DW 10; Posicion de la fila donde iniciar a pintar el cuadro de Limpiar
@@ -79,7 +82,6 @@
 	
 	;Variables para guardar y cargar archivos
 	ruta db 'C',':','\','D','i','b','u','j','o','s','\','$','$','$','$','$','$','$','$','$','$','$','$','$','$',00h ; Carpeta donde se encuentran los archivos de los dibujos
-	;rutaSegunda db 'C',':','\','D','i','b','u','j','o','s','\','h','o','l','a','.','t','x','t','$',00h ; Carpeta donde se encuentran los archivos de los dibujos
 	handle dw 0 ; Contenido del archivo (Dibujo a guardar)
 	char_buffer db 1 dup('0')
 	TempCol DW 0; Variable temporal para la columna del ciclo de guardar 
@@ -302,6 +304,7 @@
 		CALL DETECTAR_CLICK_NOMBRE; Detectar si se agrego nombre para el archivo y guardarlo
 		CALL DETECTAR_CLICK_GUARDAR; Detectar si se hizo click en GuardarBosquejo
 		CALL DETECTAR_CLICK_CARGAR; Detectar si se hizo click en CargarBosquejo
+		CALL DETECTAR_CLICK_INSERTAR; Dectar si se hizo click en InsertarImagen
 		CALL INICIO_PINTAR
 		
 		NoClick:
@@ -466,19 +469,24 @@
 	
 	INICIO_PINTAR proc; Posicion con el cursor para iniciar a pintar con las flecha
 		; Verifica si CX (ColCursor) está en el rango (50, 450)
-		CMP CX, 50; Compara CX con 50
+		CMP ColCursor, 50; Compara CX con 50
 		JLE FIN_INICIO_PINTAR; Si CX <= 50, salta a FIN_INICIO_PINTAR
-		CMP CX, 450; Compara CX con 450
+		CMP ColCursor, 450; Compara CX con 450
 		JGE FIN_INICIO_PINTAR; Si CX >= 450, salta a FIN_INICIO_PINTAR
 
 		; Verifica si DX (FilCursor) está en el rango (50, 350)
-		CMP DX, 50; Compara DX con 50
+		CMP FilCursor, 50; Compara DX con 50
 		JLE FIN_INICIO_PINTAR; Si DX <= 50, salta a FIN_INICIO_PINTAR
-		CMP DX, 350; Compara DX con 350
+		CMP FilCursor, 350; Compara DX con 350
 		JGE FIN_INICIO_PINTAR; Si DX >= 350, salta a FIN_INICIO_PINTAR
 		
+		cmp ImagenInsertada, 1; Compara si se inserto imagen para que el siguiente click sea pintarla
+		je callInsertar; Salta al procedimiento de pintar imagen insertada
 		MOV ColCursorPintar,CX; Cambia el valor de la columna para iniciar a pintar
 		MOV FilCursorPintar,DX; Cambia el valor de la fila para iniciar a pintar
+		jmp FIN_INICIO_PINTAR
+		callInsertar:
+		CALL INSERTAR_IMAGEN
 		FIN_INICIO_PINTAR:
 		ret
 	INICIO_PINTAR endp
@@ -490,7 +498,7 @@
 			
 		MOV AH, 00H; Esperar por una tecla
 		INT 16H
-		
+
 		cmp AH, 48h
 		je Flecha_Arriba; Si es flecha arriba, salta a Flecha_Arriba
 		cmp AH, 50h
@@ -596,6 +604,21 @@
 		int 10h ; Llamada a la interrupción 10h para mover el cursor
 		ret
 	MOVER_POSICION_CURSOR endp
+	
+	DETECTAR_CLICK_INSERTAR proc
+		cmp ColCursor,320
+		jle NoInsertar; si ColCursor es menor o igual salta 
+		cmp ColCursor,450
+		jge NoInsertar; si ColCursor es mayor o igual salta
+		cmp FilCursor,425
+		jle NoInsertar
+		cmp FilCursor,455
+		jge NoInsertar
+		MOV ImagenInsertada,1; Es uno para indicar que se insertó una imagen
+	
+		NoInsertar:	
+		ret
+	DETECTAR_CLICK_INSERTAR endp
 	
 	LIMPIAR_NOMBRE proc; Limpia el nombre escrito del archivo para colocar otro
 		MOV ColNombre,51; Inicia ColRecuadro en 51 para no pintar las lineas de borde
@@ -922,4 +945,134 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 			int 21h
 		ret
 	CARGAR_ARCHIVO endp
+
+	INSERTAR_IMAGEN proc
+		; Abrir archivo
+			mov ah,3dh
+			mov al,0h
+			mov dx,offset ruta ;ruta
+			int 21h
+			mov handle,ax
+		
+		; Variables
+		MOV CX,ColCursor; Coloca en CX la columna de inicio a pintar
+		MOV TempCol,CX
+		MOV DX,FilCursor; Coloca en DX la fila de inicio a pintar
+		MOV TempFil,DX
+		
+		COLUMNA_INSERTAR:
+		; Leer el archivo 		
+			mov ah,3fh
+			mov bx,handle
+			mov dx,offset char_buffer
+			mov cx,1
+			int 21h	
+			jmp CmpArchivo
+			
+			SeguirInsertando:
+			cmp char_buffer,'@'
+			je FILA_INSERTAR
+			cmp char_buffer, '%'
+			je Fin_insertarSalto						
+			INC TempCol; Incrementa la Columna
+            jmp COLUMNA_INSERTAR; Salta si AX es menor o igual a 449
+			FILA_INSERTAR:
+            MOV CX,ColCursor; Reinicia el valor de la columna
+            MOV TempCol,CX
+            INC TempFil; Incrementa la Fila	
+            jmp COLUMNA_INSERTAR; Salta si AX es menor o igual a 349
+		
+		CmpArchivo:
+			xor AL,AL
+			cmp char_buffer, '0'
+			je pint_00H
+			cmp char_buffer, '1'
+			je pint_01H
+			cmp char_buffer, '2'
+			je pint_02H
+			cmp char_buffer, '4'
+			je pint_04H
+			cmp char_buffer, '5'
+			je pint_05H
+			cmp char_buffer, '6'
+			je pint_06H
+			cmp char_buffer, '7'
+			je pint_07H
+			cmp char_buffer, '8'
+			je pint_08H
+			cmp char_buffer, '9'
+			je pint_09H
+			cmp char_buffer, 'A'
+			je pint_0AH
+			cmp char_buffer, 'B'
+			je pint_0BH
+			cmp char_buffer, 'C'
+			je pint_0CH
+			cmp char_buffer, 'E'
+			je pint_0EH
+			cmp char_buffer, 'F'
+			je pint_0FH
+			jmp SeguirInsertando
+;======================================================Salto Intermedio============================================================================
+	Fin_insertarSalto:
+	jmp Fin_insertar
+;======================================================Salto Intermedio============================================================================	
+			pint_00H:
+				mov AL, 00H
+				jmp pintPixelInsertado
+			pint_01H:
+				mov AL, 01H
+				jmp pintPixelInsertado
+			pint_02H:
+				mov AL, 02H
+				jmp pintPixelInsertado
+			pint_04H:
+				mov AL, 04H
+				jmp pintPixelInsertado
+			pint_05H:
+				mov AL, 05H
+				jmp pintPixelInsertado
+			pint_0EH:
+				mov AL, 0EH
+				jmp pintPixelInsertado
+			pint_06H:
+				mov AL, 06H
+				jmp pintPixelInsertado
+			pint_07H:
+				mov AL, 07H
+				jmp pintPixelInsertado
+			pint_08H:
+				mov AL, 08H
+				jmp pintPixelInsertado
+			pint_09H:
+				mov AL, 09H
+				jmp pintPixelInsertado
+			pint_0AH:
+				mov AL, 0AH
+				jmp pintPixelInsertado
+			pint_0BH:
+				mov AL, 0BH
+				jmp pintPixelInsertado
+			pint_0CH:
+				mov AL, 0CH
+				jmp pintPixelInsertado
+			pint_0FH:
+				mov AL, 0FH
+				jmp pintPixelInsertado
+			
+		pintPixelInsertado:
+			MOV AH, 0CH; Interrupcion 10,C 
+			MOV BH, 00; Numero de pagina
+			MOV CX, TempCol; Columna
+			MOV DX, TempFil; Fila
+			INT 10H
+			jmp SeguirInsertando
+		
+		Fin_insertar:
+		; Cerrar el archivo
+			mov ah,3eh
+			int 21h
+		MOV ImagenInsertada,0; Es cero para indicar que ya se inserto la imagen
+		ret
+	INSERTAR_IMAGEN endp
 end
