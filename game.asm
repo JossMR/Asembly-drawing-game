@@ -974,26 +974,51 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 			je FILA_INSERTAR
 			cmp char_buffer, '%'
 			je Fin_insertarSalto						
-			INC TempCol; Incrementa la Columna
-            jmp COLUMNA_INSERTAR; Salta si AX es menor o igual a 449
-			FILA_INSERTAR:
-            MOV CX,ColCursor; Reinicia el valor de la columna
-            MOV TempCol,CX
-            INC TempFil; Incrementa la Fila	
-            jmp COLUMNA_INSERTAR; Salta si AX es menor o igual a 349
-		
+			INC TempCol; Incrementa la Columna		
+			cmp TempCol, 449
+			jle COLUMNA_INSERTAR
+			jmp SaltarHastaArroba ; Buscar '@' si TempCol > 450
+			FILA_INSERTAR:          
+				INC TempFil; Incrementa la Fila	
+				cmp TempFil, 349
+				jle ResetColumna
+				jmp Fin_insertarSalto
+				ResetColumna:
+					MOV CX,ColCursor; Reinicia el valor de la columna
+					MOV TempCol,CX
+					jmp COLUMNA_INSERTAR; Salta si AX es menor o igual a 349		
 		CmpArchivo:
 			xor AL,AL
 			cmp char_buffer, '0'
-			je pint_00H
+			je pint_00H_Salto
 			cmp char_buffer, '1'
-			je pint_01H
+			je pint_01H_Salto
 			cmp char_buffer, '2'
-			je pint_02H
+			je pint_02H_Salto
+			cmp char_buffer, '3'
+			je pint_03H_Salto
 			cmp char_buffer, '4'
-			je pint_04H
+			je pint_04H_Salto
 			cmp char_buffer, '5'
-			je pint_05H
+			je pint_05H_Salto
+			jmp continuarCmp
+;======================================================Salto Intermedio============================================================================
+	Fin_insertarSalto:
+	jmp Fin_insertar
+	pint_00H_Salto:
+	jmp pint_00H
+	pint_01H_Salto:
+	jmp pint_01H
+	pint_02H_Salto:
+	jmp pint_02H
+	pint_03H_Salto:
+	jmp pint_03H
+	pint_04H_Salto:
+	jmp pint_04H
+	pint_05H_Salto:
+	jmp pint_05H
+;======================================================Salto Intermedio============================================================================	
+			continuarCmp:
 			cmp char_buffer, '6'
 			je pint_06H
 			cmp char_buffer, '7'
@@ -1008,56 +1033,70 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 			je pint_0BH
 			cmp char_buffer, 'C'
 			je pint_0CH
+			cmp char_buffer, 'D'
+			je pint_0DH
 			cmp char_buffer, 'E'
 			je pint_0EH
 			cmp char_buffer, 'F'
 			je pint_0FH
 			jmp SeguirInsertando
-;======================================================Salto Intermedio============================================================================
-	Fin_insertarSalto:
-	jmp Fin_insertar
-;======================================================Salto Intermedio============================================================================	
+			SaltarHastaArroba:
+                ; Bucle para avanzar hasta encontrar '@' en el archivo
+                mov AH, 3Fh; Función de DOS para leer archivo
+                mov BX, handle
+                mov DX, offset char_buffer
+                mov CX, 1
+                int 21h
+                cmp char_buffer, '@'
+                jne SaltarHastaArroba; Seguir leyendo si no se encuentra '@'
+                jmp SeguirInsertando
 			pint_00H:
-				mov AL, 00H
+				mov AL, 00H; Negro
 				jmp pintPixelInsertado
 			pint_01H:
-				mov AL, 01H
+				mov AL, 01H; Azul
 				jmp pintPixelInsertado
 			pint_02H:
-				mov AL, 02H
+				mov AL, 02H; Verde
+				jmp pintPixelInsertado
+			pint_03H:
+				mov AL, 03H; Cian
 				jmp pintPixelInsertado
 			pint_04H:
-				mov AL, 04H
+				mov AL, 04H; Rojo
 				jmp pintPixelInsertado
 			pint_05H:
-				mov AL, 05H
+				mov AL, 05H; Magenta
 				jmp pintPixelInsertado
 			pint_0EH:
-				mov AL, 0EH
+				mov AL, 0EH; Amarillo
 				jmp pintPixelInsertado
 			pint_06H:
-				mov AL, 06H
+				mov AL, 06H; Marron
 				jmp pintPixelInsertado
 			pint_07H:
-				mov AL, 07H
+				mov AL, 07H; Gris claro
 				jmp pintPixelInsertado
 			pint_08H:
-				mov AL, 08H
+				mov AL, 08H; Gris oscuro
 				jmp pintPixelInsertado
 			pint_09H:
-				mov AL, 09H
+				mov AL, 09H; Azul claro
 				jmp pintPixelInsertado
 			pint_0AH:
-				mov AL, 0AH
+				mov AL, 0AH; Verde claro
 				jmp pintPixelInsertado
 			pint_0BH:
-				mov AL, 0BH
+				mov AL, 0BH; Cian claro
 				jmp pintPixelInsertado
 			pint_0CH:
-				mov AL, 0CH
+				mov AL, 0CH; Rojo claro
+				jmp pintPixelInsertado
+			pint_0DH:
+				mov AL, 0DH; Magenta claro
 				jmp pintPixelInsertado
 			pint_0FH:
-				mov AL, 0FH
+				mov AL, 0FH; Blanco
 				jmp pintPixelInsertado
 			
 		pintPixelInsertado:
@@ -1070,7 +1109,7 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 		
 		Fin_insertar:
 		; Cerrar el archivo
-			mov ah,3eh
+			mov AH,3eh
 			int 21h
 		MOV ImagenInsertada,0; Es cero para indicar que ya se inserto la imagen
 		ret
