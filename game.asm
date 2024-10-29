@@ -737,31 +737,51 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 			CompararColor:
 			; Comparar el color y escribir el caracter correspondiente
 			MOV AL,tempColor
-			cmp AL, 02h
+			cmp AL, 00H
+			je escribir_0
+			cmp AL, 01H
+			je escribir_1
+			cmp AL, 02H
 			je escribir_2
-			cmp AL, 04h
+			cmp AL, 03H
+			je escribir_3
+			cmp AL, 04H
 			je escribir_4
-			cmp AL, 05h
+			cmp AL, 05H
 			je escribir_5
-			cmp AL, 06h
+			cmp AL, 06H
 			je escribir_6
+			cmp AL, 07H
+			je escribir_7
+			cmp AL, 08H
+			je escribir_8
 			cmp AL, 09h
 			je escribir_9
-			cmp AL, 0Ah
+			cmp AL, 0AH
 			je escribir_A
-			cmp AL, 0Bh
+			cmp AL, 0BH
 			je escribir_B
-			cmp AL, 0Ch
+			cmp AL, 0CH
 			je escribir_C
-			cmp AL, 0Eh
+			cmp AL, 0DH
+			je escribir_D
+			cmp AL, 0EH
 			je escribir_E
-			cmp AL, 0Fh
+			cmp AL, 0FH
 			je escribir_F
 			;jmp escribir_8
 			jmp continuar; Si no coincide, continuar
-
+		escribir_0:
+			mov AL, '0'
+			jmp escribir_character
+		escribir_1:
+			mov AL, '1'
+			jmp escribir_character
 		escribir_2:
 			mov AL, '2'
+			jmp escribir_character
+		escribir_3:
+			mov AL, '3'
 			jmp escribir_character
 		escribir_4:
 			mov AL, '4'
@@ -775,6 +795,12 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 		escribir_6:
 			mov AL, '6'
 			jmp escribir_character
+		escribir_7:
+			mov AL, '7'
+			jmp escribir_character
+		escribir_8:
+			mov AL, '8'
+			jmp escribir_character
 		escribir_9:
 			mov AL, '9'
 			jmp escribir_character
@@ -786,6 +812,9 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 			jmp escribir_character
 		escribir_C:
 			mov AL, 'C'
+			jmp escribir_character
+		escribir_D:
+			mov AL, 'D'
 			jmp escribir_character
 		escribir_F:
 			mov AL, 'F'
@@ -875,14 +904,30 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 		
 		CompararArchivo:
 			xor AL,AL
+			cmp char_buffer, '0'
+			je pintar_00H
+			cmp char_buffer, '1'
+			je pintar_01H
 			cmp char_buffer, '2'
 			je pintar_02H
+			cmp char_buffer, '3'
+			je pintar_03H
 			cmp char_buffer, '4'
 			je pintar_04H
 			cmp char_buffer, '5'
 			je pintar_05H
 			cmp char_buffer, '6'
 			je pintar_06H
+			jmp continuarCargando
+;======================================================Salto Intermedio============================================================================
+	Fin_cargarSalto:
+	jmp Fin_cargar
+;======================================================Salto Intermedio============================================================================	
+			continuarCargando:
+			cmp char_buffer, '7'
+			je pintar_07H
+			cmp char_buffer, '8'
+			je pintar_08H
 			cmp char_buffer, '9'
 			je pintar_09H
 			cmp char_buffer, 'A'
@@ -891,18 +936,25 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 			je pintar_0BH
 			cmp char_buffer, 'C'
 			je pintar_0CH
+			cmp char_buffer, 'D'
+			je pintar_0DH
 			cmp char_buffer, 'E'
 			je pintar_0EH
 			cmp char_buffer, 'F'
 			je pintar_0FH
 			jmp SeguirCargando
-;======================================================Salto Intermedio============================================================================
-	Fin_cargarSalto:
-	jmp Fin_cargar
-;======================================================Salto Intermedio============================================================================	
+			pintar_00H:
+				mov AL, 00H
+				jmp pintarPixelCargado
+			pintar_01H:
+				mov AL, 01H
+				jmp pintarPixelCargado
 			pintar_02H:
-			mov AL, 02H
-			jmp pintarPixelCargado
+				mov AL, 02H
+				jmp pintarPixelCargado
+			pintar_03H:
+				mov AL, 03H
+				jmp pintarPixelCargado
 			pintar_04H:
 				mov AL, 04H
 				jmp pintarPixelCargado
@@ -915,6 +967,12 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 			pintar_06H:
 				mov AL, 06H
 				jmp pintarPixelCargado
+			pintar_07H:
+				mov AL, 07H
+				jmp pintarPixelCargado
+			pintar_08H:
+				mov AL, 08H
+				jmp pintarPixelCargado
 			pintar_09H:
 				mov AL, 09H
 				jmp pintarPixelCargado
@@ -926,6 +984,9 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 				jmp pintarPixelCargado
 			pintar_0CH:
 				mov AL, 0CH
+				jmp pintarPixelCargado
+			pintar_0DH:
+				mov AL, 0DH
 				jmp pintarPixelCargado
 			pintar_0FH:
 				mov AL, 0FH
