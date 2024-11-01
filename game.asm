@@ -211,7 +211,8 @@
 		MOV FilRecuadro,51; Inicia FilRecuadro en 51 para no pintar las lineas de borde
 		MOV CX,ColRecuadro; Coloca en CX la columna de inicio a pintar
 		MOV DX,FilRecuadro; Coloca en DX la fila de inicio a pintar
-
+		MOV AX, 0002H; Oculta el cursor del mouse
+		INT 33H
 		COLUMNA_RECUADRO:
 			PINTA_PIXEL CX,DX,0FH; Llama al  macro de pintar un pixel de color blanco
 			
@@ -223,6 +224,8 @@
 			INC DX; Incrementa la Fila
 			cmp DX,349;Compara si se excedio la coodenada de la fila que se queria
 			jng COLUMNA_RECUADRO; Salta si AX es menor a 298 es decir si no se excedio el tamano
+		MOV AX, 0001H; Muestra nuevamente el cursor del mouse
+		INT 33H
 		ret
 	LIMPIAR_DIBUJO endp
 	
@@ -420,35 +423,68 @@
 		ret
 	DETECTAR_CLICK_LIMPIAR endp
 	
-	DETECTAR_CLICK_NOMBRE proc; Detecta si se hizo click en el espacio de nombre del archivo
-		cmp ColCursor,50
-		jle NoEscribir; si ColCursor es menor o igual salta 
-		cmp ColCursor,180
-		jge NoEscribir; si ColCursor es mayor o igual salta
-		cmp FilCursor,10
+	DETECTAR_CLICK_NOMBRE proc; Detecta si se hizo clic en el espacio de nombre del archivo
+		cmp ColCursor, 50
+		jle NoEscribir; Si ColCursor es menor o igual, salta 
+		cmp ColCursor, 180
+		jge NoEscribir; Si ColCursor es mayor o igual, salta
+		cmp FilCursor, 10
 		jle NoEscribir
-		cmp FilCursor,40
-		jge NoEscribir		
-		;CALL GUARDAR_NOMBRE
-			CALL LIMPIAR_NOMBRE
-			CALL MOVER_POSICION_CURSOR
-			mov si,11; Iniciamos el contador donde queremos escribir la ruta
-			LeerpantallaNombre:
-				mov ah,1h
-				int 21h
-				cmp al,13d; Revisar si se precionó enter
-				je TerminarNombre
-				cmp si,24; Revisar si se llegó al maximo
-				je TerminarNombre
-				mov ruta[si],al
-				inc si
-				jmp LeerpantallaNombre
-				TerminarNombre:
-				mov ruta[si],'$'
-		jmp FinClickNombre
-		NoEscribir:
+		cmp FilCursor, 40
+		jge NoEscribir        
+
+		CALL LIMPIAR_NOMBRE
+		CALL MOVER_POSICION_CURSOR
+		MOV AX, 0002H; Oculta el cursor del mouse
+		INT 33H
+		mov si, 11; Inicia el contador donde donde se inicia a escribir la`ruta`
+		LeerpantallaNombre:
+			mov ah, 1h
+			int 21h
+			cmp al, 13d; Verifica si se presionó Enter
+			je TerminarNombre
+			cmp si, 20; Revisa el límite (deja espacio para .txt)
+			je TerminarNombre
+			mov ruta[si], al
+			inc si
+			jmp LeerpantallaNombre			
+
+		TerminarNombre:
+			; Verifica si el usuario ya escribió .txt
+			mov ax, si; Guarda el índice actual en AX
+			sub ax, 4; Retrocede 4 posiciones para verificar los últimos caracteres
+			mov di, ax
+
+			; Comprueba si los últimos cuatro caracteres son '.txt'
+			cmp ruta[di], '.'       
+			jne AgregarExtension    
+			cmp ruta[di+1], 't'
+			jne AgregarExtension
+			cmp ruta[di+2], 'x'
+			jne AgregarExtension
+			cmp ruta[di+3], 't'
+			jne AgregarExtension
+
+			jmp FinClickNombre; Salta si ya tiene .txt
+
+		AgregarExtension:
+			; Agrega .txt automáticamente si no está presente
+			mov ruta[si], '.'
+			inc si
+			mov ruta[si], 't'
+			inc si
+			mov ruta[si], 'x'
+			inc si
+			mov ruta[si], 't'
+			inc si
+			mov ruta[si], '$'; final de la cadena
 		FinClickNombre:
-		ret
+			ret
+
+		NoEscribir:
+		MOV AX, 0001H; Muestra nuevamente el cursor del mouse
+		INT 33H
+			ret
 	DETECTAR_CLICK_NOMBRE endp
 	
 	DETECTAR_CLICK_GUARDAR proc; Detecta si se hizo click en el espacio de GuardarBosquejo
@@ -590,11 +626,6 @@
 		ret
 	PINTAR_DERECHA endp
 	
-	GUARDAR_NOMBRE proc; Guarda el nombre del archivo
-		
-			ret
-	GUARDAR_NOMBRE endp
-	
 	MOVER_POSICION_CURSOR proc; Mueve la posicion del cursor para escribir nombre del archivo
 		; Mover el cursor a la posición deseada
 		mov ah, 02h; Función para mover el cursor
@@ -621,6 +652,8 @@
 	DETECTAR_CLICK_INSERTAR endp
 	
 	LIMPIAR_NOMBRE proc; Limpia el nombre escrito del archivo para colocar otro
+		MOV AX, 0002H; Oculta el cursor del mouse
+		INT 33H
 		MOV ColNombre,51; Inicia ColRecuadro en 51 para no pintar las lineas de borde
 		MOV FilNombre,11; Inicia FilRecuadro en 11 para no pintar las lineas de borde
 		MOV CX,ColNombre; Coloca en CX la columna de inicio a pintar
@@ -637,6 +670,9 @@
 			INC DX; Incrementa la Fila
 			cmp DX,39;Compara si se excedio el tamano de la fila que se queria
 			jng COLUMNA_NOMBRE; Salta si AX es menor a 298 es decir si no se excedio el tamano
+
+		MOV AX, 0001H; Muestra nuevamente el cursor del mouse
+		INT 33H
 		ret
 	LIMPIAR_NOMBRE endp
 	
@@ -1008,6 +1044,8 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 	CARGAR_ARCHIVO endp
 
 	INSERTAR_IMAGEN proc
+		MOV AX, 0002H; Oculta el cursor del mouse
+		INT 33H
 		; Abrir archivo
 			mov ah,3dh
 			mov al,0h
@@ -1173,6 +1211,8 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 			mov AH,3eh
 			int 21h
 		MOV ImagenInsertada,0; Es cero para indicar que ya se inserto la imagen
+		MOV AX, 0001H; Muestra nuevamente el cursor del mouse
+		INT 33H
 		ret
 	INSERTAR_IMAGEN endp
 end
