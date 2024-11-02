@@ -194,8 +194,8 @@
 		jmp CICLOJUEGO
 	
 		
-	mov AH,4CH; Interrupcion 10,4C para finalizar programa
-	int 21H
+	MOV AH,4CH; Interrupcion 10,4C para finalizar programa
+	INT 21H
 
 	CLEAN proc
 		MOV AX,0700H; Interrupcion 10,7 para limpiar pantalla
@@ -437,23 +437,23 @@
 		CALL MOVER_POSICION_CURSOR
 		MOV AX, 0002H; Oculta el cursor del mouse
 		INT 33H
-		mov si, 11; Inicia el contador donde donde se inicia a escribir la`ruta`
+		MOV si, 11; Inicia el contador donde donde se inicia a escribir la`ruta`
 		LeerpantallaNombre:
-			mov ah, 1h
-			int 21h
+			MOV ah, 1H
+			INT 21H
 			cmp al, 13d; Verifica si se presionó Enter
 			je TerminarNombre
 			cmp si, 20; Revisa el límite (deja espacio para .txt)
 			je TerminarNombre
-			mov ruta[si], al
+			MOV ruta[si], al
 			inc si
 			jmp LeerpantallaNombre			
 
 		TerminarNombre:
-			; Verifica si el usuario ya escribió .txt
-			mov ax, si; Guarda el índice actual en AX
-			sub ax, 4; Retrocede 4 posiciones para verificar los últimos caracteres
-			mov di, ax
+			; Verifica si ya escribió .txt
+			MOV AX, si; Guarda el índice actual en AX
+			sub AX, 4; Retrocede 4 posiciones para verificar los últimos caracteres
+			MOV di, AX
 
 			; Comprueba si los últimos cuatro caracteres son '.txt'
 			cmp ruta[di], '.'       
@@ -469,15 +469,15 @@
 
 		AgregarExtension:
 			; Agrega .txt automáticamente si no está presente
-			mov ruta[si], '.'
+			MOV ruta[si], '.'
 			inc si
-			mov ruta[si], 't'
+			MOV ruta[si], 't'
 			inc si
-			mov ruta[si], 'x'
+			MOV ruta[si], 'x'
 			inc si
-			mov ruta[si], 't'
+			MOV ruta[si], 't'
 			inc si
-			mov ruta[si], '$'; final de la cadena
+			MOV ruta[si], '$'; final de la cadena
 		FinClickNombre:
 			ret
 
@@ -535,13 +535,13 @@
 		MOV AH, 00H; Esperar por una tecla
 		INT 16H
 
-		cmp AH, 48h
+		cmp AH, 48H
 		je Flecha_Arriba; Si es flecha arriba, salta a Flecha_Arriba
-		cmp AH, 50h
+		cmp AH, 50H
 		je Flecha_Abajo; Si es flecha es abajo salta a Flecha_Abajo
-		cmp AH, 4Bh
+		cmp AH, 4BH
 		je Flecha_Izquierda; Si es flecha es izquierda salta a Flecha_Izquierda
-		cmp AH, 4Dh
+		cmp AH, 4DH
 		je Flecha_Derecha; Si es flecha es abajo derecha a Flecha_Derecha
 		jmp TerminarRevision
 		
@@ -587,52 +587,68 @@
 	MOVERLAPIZ endp
 	
 	PINTAR_ARRIBA proc; Pintar hacia arriba con las flechas
+		MOV AX, 0002H; Oculta el cursor del mouse
+		INT 33H
 		MOV AH, 0CH; Interrupcion 10,C
 		MOV AL, ColorSeleccionado; Color
 		MOV BH, 00; Numero de pagina
 		MOV CX, ColCursorPintar; Columna
 		MOV DX, FilCursorPintar; Fila
 		INT 10H
+		MOV AX, 0001H; Muestra nuevamente el cursor del mouse
+		INT 33H
 		ret
 	PINTAR_ARRIBA endp
 	
 	PINTAR_ABAJO proc; Pintar hacia abajo con las flechas
+		MOV AX, 0002H; Oculta el cursor del mouse
+		INT 33H
 		MOV AH, 0CH; Interrupcion 10,C
 		MOV AL, ColorSeleccionado; Color
 		MOV BH, 00; Numero de pagina
 		MOV CX, ColCursorPintar; Columna
 		MOV DX, FilCursorPintar; Fila
 		INT 10H
+		MOV AX, 0001H; Muestra nuevamente el cursor del mouse
+		INT 33H
 		ret
 	PINTAR_ABAJO endp
 	
 	PINTAR_IZQUIERDA proc; Pintar hacia la izquierda con las flechas
+		MOV AX, 0002H; Oculta el cursor del mouse
+		INT 33H
 		MOV AH, 0CH; Interrupcion 10,C
 		MOV AL, ColorSeleccionado; Color
 		MOV BH, 00; Numero de pagina
 		MOV CX, ColCursorPintar; Columna
 		MOV DX, FilCursorPintar; Fila
 		INT 10H
+		MOV AX, 0001H; Muestra nuevamente el cursor del mouse
+		INT 33H
 		ret
 	PINTAR_IZQUIERDA endp
 	
 	PINTAR_DERECHA proc; Pintar hacia la derecha con las flechas
+		MOV AX, 0002H; Oculta el cursor del mouse
+		INT 33H
 		MOV AH, 0CH; Interrupcion 10,C
 		MOV AL, ColorSeleccionado; Color
 		MOV BH, 00; Numero de pagina
 		MOV CX, ColCursorPintar; Columna
 		MOV DX, FilCursorPintar; Fila
 		INT 10H
+		MOV AX, 0001H; Muestra nuevamente el cursor del mouse
+		INT 33H
 		ret
 	PINTAR_DERECHA endp
 	
 	MOVER_POSICION_CURSOR proc; Mueve la posicion del cursor para escribir nombre del archivo
 		; Mover el cursor a la posición deseada
-		mov ah, 02h; Función para mover el cursor
-		mov bh, 0; Página de video (0)
-		mov dh, 1; Fila (y) en la que quieres posicionar el cursor
-		mov dl, 8; Columna (x) en la que quieres posicionar el cursor
-		int 10h ; Llamada a la interrupción 10h para mover el cursor
+		MOV ah, 02H; Función para mover el cursor
+		MOV BH, 0; Página de video (0)
+		MOV DH, 1; Fila (y) en la que quieres posicionar el cursor
+		MOV DL, 8; Columna (x) en la que quieres posicionar el cursor
+		INT 10H ; Llamada a la interrupción 10h para mover el cursor
 		ret
 	MOVER_POSICION_CURSOR endp
 	
@@ -677,41 +693,41 @@
 	LIMPIAR_NOMBRE endp
 	
 	GUARDAR_ARCHIVO proc; Guarda el archivo con el nombre que se escribio anteriormente
-		mov ah,3ch
-		mov cx,0
-		mov dx,offset ruta
-		int 21h
-		mov handle,ax
-		mov bx,ax
-		mov ah,3eh; Cerrar el Archivo
-		int 21h
+		MOV ah,3CH
+		MOV CX,0
+		MOV DX,offset ruta
+		INT 21H
+		MOV handle,AX
+		MOV BX,AX
+		MOV ah,3EH; Cerrar el Archivo
+		INT 21H
 		ret
 	GUARDAR_ARCHIVO endp
 	
 	ESCRIBIR_PRUEBA proc
 			MOV AL,'8'
-			mov char_buffer[0], AL ; Almacenar el carácter '8' en el buffer
+			MOV char_buffer[0], AL ; Almacenar el carácter '8' en el buffer
 	
-			mov ah,3dh							;Empezamos a abrir el archivo en modo escritura
-			mov al,2h
-			mov dx,offset ruta					;Ponemos la ruta del archivo a abrir
-			int 21h
+			MOV ah,3DH							;Empezamos a abrir el archivo en modo escritura
+			MOV al,2H
+			MOV DX,offset ruta					;Ponemos la ruta del archivo a abrir
+			INT 21H
 POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 		IMPRIMIR ruta		
 			;jc TERMINARPRUEBA       ; Si hubo error, saltar a TERMINARPRUEBA
 
-			mov bx, ax             ; Guardar el manejador del archivo (en BX)
+			MOV BX, AX             ; Guardar el manejador del archivo (en BX)
 	POSICION 1,20; Posicion para poner el texto de la opcion Limpiar
 		IMPRIMIR LimpiarOpcion
 			
 			;; Escribir en el archivo
-			mov cx, 1              ; Cantidad de bytes a escribir (1 byte)
-			mov dx, offset char_buffer ; Dirección del buffer
-			mov ah, 40h            ; Función de escritura en archivo
-			int 21h                ; Llamada a DOS para escribir
+			MOV CX, 1              ; Cantidad de bytes a escribir (1 byte)
+			MOV DX, offset char_buffer ; Dirección del buffer
+			MOV ah, 40H            ; Función de escritura en archivo
+			INT 21H                ; Llamada a DOS para escribir
 			;jc TERMINARPRUEBA      ; Verificar si ocurrió un error
 
-			cmp ax, cx             ; Comparar bytes escritos con los solicitados
+			cmp AX, CX             ; Comparar bytes escritos con los solicitados
 			;jne TERMINARPRUEBA     ; Si no se escribieron todos, ir a TERMINARPRUEBA
 
 			;TERMINARPRUEBA:
@@ -719,13 +735,13 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 	ESCRIBIR_PRUEBA endp
 	
 	ESCRIBIR_ARCHIVO proc
-		mov ah,3ch;Empezamos a abrir el archivo en modo escritura
-		mov al,1h
-		mov dx,offset ruta;Ponemos la ruta del archivo a abrir
-		int 21h
+		MOV ah,3CH;Empezamos a abrir el archivo en modo escritura
+		MOV al,1H
+		MOV DX,offset ruta;Ponemos la ruta del archivo a abrir
+		INT 21H
 		jc SaltoIrATerminarContenido; Si hubo error, terminar
 
-		mov bx, ax; Guardar manejador del archivo
+		MOV BX, AX; Guardar manejador del archivo
 		
 		; Variables
 		MOV ColRecuadro,51; Inicia ColRecuadro en 51 para no pintar las lineas de borde
@@ -752,13 +768,13 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
             MOV TempCol,CX
             INC TempFil; Incrementa la Fila
 			
-			mov AL, '@'
-			mov char_buffer, AL
-			mov cx,1; Cantidad a guardar
-			mov dx,offset char_buffer; Cargamos Datos
-			mov ah,40h
-			int 21h
-			cmp cx,ax
+			MOV AL, '@'
+			MOV char_buffer, AL
+			MOV CX,1; Cantidad a guardar
+			MOV DX,offset char_buffer; Cargamos Datos
+			MOV AH,40H
+			INT 21H
+			cmp CX,AX
 			jne SaltoIrATerminarContenido
 			
             MOV AX,TempFil; Pone el valor de la fila aumentada en AX
@@ -791,7 +807,7 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 			je escribir_7
 			cmp AL, 08H
 			je escribir_8
-			cmp AL, 09h
+			cmp AL, 09H
 			je escribir_9
 			cmp AL, 0AH
 			je escribir_A
@@ -808,79 +824,79 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 			;jmp escribir_8
 			jmp continuar; Si no coincide, continuar
 		escribir_0:
-			mov AL, '0'
+			MOV AL, '0'
 			jmp escribir_character
 		escribir_1:
-			mov AL, '1'
+			MOV AL, '1'
 			jmp escribir_character
 		escribir_2:
-			mov AL, '2'
+			MOV AL, '2'
 			jmp escribir_character
 		escribir_3:
-			mov AL, '3'
+			MOV AL, '3'
 			jmp escribir_character
 		escribir_4:
-			mov AL, '4'
+			MOV AL, '4'
 			jmp escribir_character
 		escribir_5:
-			mov AL, '5'
+			MOV AL, '5'
 			jmp escribir_character
 		escribir_E:
-			mov AL, 'E'
+			MOV AL, 'E'
 			jmp escribir_character
 		escribir_6:
-			mov AL, '6'
+			MOV AL, '6'
 			jmp escribir_character
 		escribir_7:
-			mov AL, '7'
+			MOV AL, '7'
 			jmp escribir_character
 		escribir_8:
-			mov AL, '8'
+			MOV AL, '8'
 			jmp escribir_character
 		escribir_9:
-			mov AL, '9'
+			MOV AL, '9'
 			jmp escribir_character
 		escribir_A:
-			mov AL, 'A'
+			MOV AL, 'A'
 			jmp escribir_character
 		escribir_B:
-			mov AL, 'B'
+			MOV AL, 'B'
 			jmp escribir_character
 		escribir_C:
-			mov AL, 'C'
+			MOV AL, 'C'
 			jmp escribir_character
 		escribir_D:
-			mov AL, 'D'
+			MOV AL, 'D'
 			jmp escribir_character
 		escribir_F:
-			mov AL, 'F'
+			MOV AL, 'F'
 			jmp escribir_character	
 		escribir_character:
-			mov char_buffer, AL
+			MOV char_buffer, AL
 			;;Escribir en el archivo
-			mov cx,1; Cantidad a guardar
-			mov dx,offset char_buffer; Cargamos Datos
-			mov ah,40h
-			int 21h
-			cmp cx,ax
+			MOV CX,1; Cantidad a guardar
+			MOV DX,offset char_buffer; Cargamos Datos
+			MOV AH,40H
+			INT 21H
+			cmp CX,AX
 			jne TerminarContenido; En caso de fallar sale
 			jmp continuar
 		
 		Fin_archivo:
 			; Al final de todos los caracteres, escribir '%'
-			mov AL, '%'
-			mov char_buffer, AL
-			mov cx,1; Cantidad a guardar
-			mov dx,offset char_buffer; Cargamos Datos
-			mov ah,40h
-			int 21h
-			cmp cx,ax
+			MOV AL, '%'
+			MOV char_buffer, AL
+			MOV CX,1; Cantidad a guardar
+			MOV DX,offset char_buffer; Cargamos Datos
+			MOV AH,40H
+			INT 21H
+			cmp CX,AX
 			jne TerminarContenido; En caso de fallar sale
 
 		; Cerrar el archivo
-		mov ah, 3eh; Cerrar archivo
-		mov bx, handle
-		int 21h
+		MOV AH, 3EH; Cerrar archivo
+		MOV BX, handle
+		INT 21H
 
 		TerminarContenido:
 		ret       
@@ -901,12 +917,14 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 	DETECTAR_CLICK_CARGAR endp
 	
 	CARGAR_ARCHIVO proc
+		MOV AX, 0002H; Oculta el cursor del mouse
+		INT 33H
 		; Abrir archivo
-			mov ah,3dh
-			mov al,0h
-			mov dx,offset ruta ;ruta
-			int 21h
-			mov handle,ax
+			MOV AH,3DH
+			MOV AL,0H
+			MOV DX,offset ruta ;ruta
+			INT 21H
+			MOV handle,AX
 		
 		; Variables
 		MOV ColRecuadro,51; Inicia ColRecuadro en 51 para no pintar las lineas de borde
@@ -918,11 +936,11 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 		
 		COLUMNA_CARGAR:
 		; Leer el archivo 		
-			mov ah,3fh
-			mov bx,handle
-			mov dx,offset char_buffer
-			mov cx,1
-			int 21h	
+			MOV AH,3FH
+			MOV BX,handle
+			MOV DX,offset char_buffer
+			MOV CX,1
+			INT 21H	
 			jmp CompararArchivo
 			
 			SeguirCargando:
@@ -980,52 +998,52 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 			je pintar_0FH
 			jmp SeguirCargando
 			pintar_00H:
-				mov AL, 00H
+				MOV AL, 00H
 				jmp pintarPixelCargado
 			pintar_01H:
-				mov AL, 01H
+				MOV AL, 01H
 				jmp pintarPixelCargado
 			pintar_02H:
-				mov AL, 02H
+				MOV AL, 02H
 				jmp pintarPixelCargado
 			pintar_03H:
-				mov AL, 03H
+				MOV AL, 03H
 				jmp pintarPixelCargado
 			pintar_04H:
-				mov AL, 04H
+				MOV AL, 04H
 				jmp pintarPixelCargado
 			pintar_05H:
-				mov AL, 05H
+				MOV AL, 05H
 				jmp pintarPixelCargado
 			pintar_0EH:
-				mov AL, 0EH
+				MOV AL, 0EH
 				jmp pintarPixelCargado
 			pintar_06H:
-				mov AL, 06H
+				MOV AL, 06H
 				jmp pintarPixelCargado
 			pintar_07H:
-				mov AL, 07H
+				MOV AL, 07H
 				jmp pintarPixelCargado
 			pintar_08H:
-				mov AL, 08H
+				MOV AL, 08H
 				jmp pintarPixelCargado
 			pintar_09H:
-				mov AL, 09H
+				MOV AL, 09H
 				jmp pintarPixelCargado
 			pintar_0AH:
-				mov AL, 0AH
+				MOV AL, 0AH
 				jmp pintarPixelCargado
 			pintar_0BH:
-				mov AL, 0BH
+				MOV AL, 0BH
 				jmp pintarPixelCargado
 			pintar_0CH:
-				mov AL, 0CH
+				MOV AL, 0CH
 				jmp pintarPixelCargado
 			pintar_0DH:
-				mov AL, 0DH
+				MOV AL, 0DH
 				jmp pintarPixelCargado
 			pintar_0FH:
-				mov AL, 0FH
+				MOV AL, 0FH
 				jmp pintarPixelCargado
 			
 		pintarPixelCargado:
@@ -1038,8 +1056,10 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 		
 		Fin_cargar:
 		; Cerrar el archivo
-			mov ah,3eh
-			int 21h
+			MOV AH,3EH
+			INT 21H
+		MOV AX, 0001H; Muestra nuevamente el cursor del mouse
+		INT 33H
 		ret
 	CARGAR_ARCHIVO endp
 
@@ -1047,11 +1067,11 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 		MOV AX, 0002H; Oculta el cursor del mouse
 		INT 33H
 		; Abrir archivo
-			mov ah,3dh
-			mov al,0h
-			mov dx,offset ruta ;ruta
-			int 21h
-			mov handle,ax
+			MOV AH,3DH
+			MOV AL,0H
+			MOV DX,offset ruta ;ruta
+			INT 21H
+			MOV handle,AX
 		
 		; Variables
 		MOV CX,ColCursor; Coloca en CX la columna de inicio a pintar
@@ -1061,11 +1081,11 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 		
 		COLUMNA_INSERTAR:
 		; Leer el archivo 		
-			mov ah,3fh
-			mov bx,handle
-			mov dx,offset char_buffer
-			mov cx,1
-			int 21h	
+			MOV AH,3FH
+			MOV BX,handle
+			MOV DX,offset char_buffer
+			MOV CX,1
+			INT 21H
 			jmp CmpArchivo
 			
 			SeguirInsertando:
@@ -1141,61 +1161,61 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 			jmp SeguirInsertando
 			SaltarHastaArroba:
                 ; Bucle para avanzar hasta encontrar '@' en el archivo
-                mov AH, 3Fh; Función de DOS para leer archivo
-                mov BX, handle
-                mov DX, offset char_buffer
-                mov CX, 1
-                int 21h
+                MOV AH, 3FH; Función de DOS para leer archivo
+                MOV BX, handle
+                MOV DX, offset char_buffer
+                MOV CX, 1
+                INT 21H
                 cmp char_buffer, '@'
                 jne SaltarHastaArroba; Seguir leyendo si no se encuentra '@'
                 jmp SeguirInsertando
 			pint_00H:
-				mov AL, 00H; Negro
+				MOV AL, 00H; Negro
 				jmp pintPixelInsertado
 			pint_01H:
-				mov AL, 01H; Azul
+				MOV AL, 01H; Azul
 				jmp pintPixelInsertado
 			pint_02H:
-				mov AL, 02H; Verde
+				MOV AL, 02H; Verde
 				jmp pintPixelInsertado
 			pint_03H:
-				mov AL, 03H; Cian
+				MOV AL, 03H; Cian
 				jmp pintPixelInsertado
 			pint_04H:
-				mov AL, 04H; Rojo
+				MOV AL, 04H; Rojo
 				jmp pintPixelInsertado
 			pint_05H:
-				mov AL, 05H; Magenta
+				MOV AL, 05H; Magenta
 				jmp pintPixelInsertado
 			pint_0EH:
-				mov AL, 0EH; Amarillo
+				MOV AL, 0EH; Amarillo
 				jmp pintPixelInsertado
 			pint_06H:
-				mov AL, 06H; Marron
+				MOV AL, 06H; Marron
 				jmp pintPixelInsertado
 			pint_07H:
-				mov AL, 07H; Gris claro
+				MOV AL, 07H; Gris claro
 				jmp pintPixelInsertado
 			pint_08H:
-				mov AL, 08H; Gris oscuro
+				MOV AL, 08H; Gris oscuro
 				jmp pintPixelInsertado
 			pint_09H:
-				mov AL, 09H; Azul claro
+				MOV AL, 09H; Azul claro
 				jmp pintPixelInsertado
 			pint_0AH:
-				mov AL, 0AH; Verde claro
+				MOV AL, 0AH; Verde claro
 				jmp pintPixelInsertado
 			pint_0BH:
-				mov AL, 0BH; Cian claro
+				MOV AL, 0BH; Cian claro
 				jmp pintPixelInsertado
 			pint_0CH:
-				mov AL, 0CH; Rojo claro
+				MOV AL, 0CH; Rojo claro
 				jmp pintPixelInsertado
 			pint_0DH:
-				mov AL, 0DH; Magenta claro
+				MOV AL, 0DH; Magenta claro
 				jmp pintPixelInsertado
 			pint_0FH:
-				mov AL, 0FH; Blanco
+				MOV AL, 0FH; Blanco
 				jmp pintPixelInsertado
 			
 		pintPixelInsertado:
@@ -1208,8 +1228,8 @@ POSICION 3,30; Posicion para poner el texto de la opcion Limpiar
 		
 		Fin_insertar:
 		; Cerrar el archivo
-			mov AH,3eh
-			int 21h
+			MOV AH,3EH
+			INT 21H
 		MOV ImagenInsertada,0; Es cero para indicar que ya se inserto la imagen
 		MOV AX, 0001H; Muestra nuevamente el cursor del mouse
 		INT 33H
